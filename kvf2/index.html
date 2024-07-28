@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kringvarp Føroya</title> 
+    <title>Kringvarp Føroya</title> <!DOCTYPE html>
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#000000">
     <link rel="apple-touch-icon" href="icons/icon-192x192.png">
@@ -30,26 +30,6 @@
             width: 100%;
             height: 100%;
             background-color: black;
-        }
-        .controls {
-            position: fixed;
-            bottom: 10%;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 20px;
-        }
-        button {
-            background-color: #333;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 1rem;
-            cursor: pointer;
-        }
-        button:focus {
-            outline: none;
-            box-shadow: 0 0 10px white;
         }
         .loading {
             color: white;
@@ -78,13 +58,6 @@
     <div id="loading" class="loading">Loading...</div>
     <div id="error" class="error">Error loading stream</div>
     <div id="player"></div>
-    <div class="controls">
-        <button id="playPauseBtn">Play/Pause</button>
-        <button id="stopBtn">Stop</button>
-        <button id="rewindBtn">Rewind</button>
-        <button id="forwardBtn">Forward</button>
-        <button id="fullscreenBtn">Toggle Fullscreen</button>
-    </div>
     <script src="script.js"></script>
     <script>
         window.onload = function() {
@@ -98,4 +71,4 @@
         }
     </script>
 </body>
-</html>    
+</html>

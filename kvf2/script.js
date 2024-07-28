@@ -4,7 +4,6 @@ const errorElement = document.getElementById('error');
 
 let videoUrl = 'https://play.kringvarp.fo/redirect/uttanlands/_definst_/1080?type=m3u8'; // Replace with your actual video URL
 let avplay = null; // AVPlay instance
-let isPlaying = false; // Playback state
 
 function initializeAVPlay() {
     try {
@@ -49,7 +48,10 @@ function initializeAVPlay() {
         avplay.setStreamingProperty('ADAPTIVE_INFO', '1');
         avplay.setStreamingProperty('BUFFER_SIZE', '20');
         avplay.setDisplayMethod('PLAYER_DISPLAY_MODE_LETTER_BOX');
-        playPauseVideo();
+
+        avplay.prepareAsync(() => {
+            avplay.play();
+        });
 
     } catch (error) {
         console.error('Failed to initialize AVPlay:', error);
@@ -57,105 +59,3 @@ function initializeAVPlay() {
         errorElement.style.display = 'block';
     }
 }
-
-function playPauseVideo() {
-    if (isPlaying) {
-        avplay.pause();
-        isPlaying = false;
-    } else {
-        avplay.prepareAsync(() => {
-            avplay.play();
-            isPlaying = true;
-        });
-    }
-}
-
-function stopVideo() {
-    if (isPlaying) {
-        avplay.stop();
-        isPlaying = false;
-    }
-}
-
-function rewindVideo() {
-    if (isPlaying) {
-        const currentPosition = avplay.getCurrentTime();
-        avplay.seekTo(currentPosition - 10000);
-    }
-}
-
-function forwardVideo() {
-    if (isPlaying) {
-        const currentPosition = avplay.getCurrentTime();
-        avplay.seekTo(currentPosition + 10000);
-    }
-}
-
-function enterFullscreen() {
-    if (playerElement.requestFullscreen) {
-        playerElement.requestFullscreen();
-    } else if (playerElement.mozRequestFullScreen) { // Firefox
-        playerElement.mozRequestFullScreen();
-    } else if (playerElement.webkitRequestFullscreen) { // Chrome, Safari and Opera
-        playerElement.webkitRequestFullscreen();
-    } else if (playerElement.msRequestFullscreen) { // IE/Edge
-        playerElement.msRequestFullscreen();
-    }
-}
-
-function exitFullscreen() {
-    if (document.exitFullscreen) {
-        document.exitFullscreen();
-    } else if (document.mozCancelFullScreen) { // Firefox
-        document.mozCancelFullScreen();
-    } else if (document.webkitExitFullscreen) { // Chrome, Safari and Opera
-        document.webkitExitFullscreen();
-    } else if (document.msExitFullscreen) { // IE/Edge
-        document.msExitFullscreen();
-    }
-}
-
-function toggleFullscreen() {
-    if (!document.fullscreenElement &&
-        !document.mozFullScreenElement &&
-        !document.webkitFullscreenElement &&
-        !document.msFullscreenElement) {
-        enterFullscreen();
-    } else {
-        exitFullscreen();
-    }
-}
-
-document.getElementById('playPauseBtn').addEventListener('click', playPauseVideo);
-document.getElementById('stopBtn').addEventListener('click', stopVideo);
-document.getElementById('rewindBtn').addEventListener('click', rewindVideo);
-document.getElementById('forwardBtn').addEventListener('click', forwardVideo);
-document.getElementById('fullscreenBtn').addEventListener('click', toggleFullscreen);
-
-document.addEventListener('keydown', function(event) {
-    switch (event.keyCode) {
-        case 13: 
-            playPauseVideo();
-            break;
-        case 415:
-            playPauseVideo();
-            break;
-        case 19:
-            playPauseVideo();
-            break;
-        case 413:
-            stopVideo();
-            break;
-        case 412:
-            rewindVideo();
-            break;
-        case 417:
-            forwardVideo();
-            break;
-        case 10252:
-            toggleFullscreen();
-            break;
-        default:
-            break;
-    }
-});
