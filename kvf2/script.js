@@ -2,7 +2,7 @@ const playerElement = document.getElementById('player');
 const loadingElement = document.getElementById('loading');
 const errorElement = document.getElementById('error');
 
-let videoUrl = 'https://play.kringvarp.fo/redirect/uttanlands/_definst_/smil:uttanlands.smil?type=m3u8'; // Replace with your actual video URL
+let videoUrl = 'https://play.kringvarp.fo/redirect/uttanlands/_definst_/1080?type=m3u8'; // Replace with your actual video URL
 let avplay = null; // AVPlay instance
 let isPlaying = false; // Playback state
 
