@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kringvarp Føroya</title> <!DOCTYPE html>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#000000">
-    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#000000"> <!-- Theme color for browser UI -->
+    <meta name="apple-mobile-web-app-capable" content="yes"> <!-- Enable iOS standalone mode -->
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes"> <!-- Enable Android standalone mode -->
+    <link rel="apple-touch-icon" href="icon-192x192.png"> <!-- iOS specific -->
+    <title>Kringvarp Føroya</title>
+    <link rel="manifest" href="manifest.json"> <!-- Link to the manifest file -->
     <style>
         body, html {
             margin: 0;
@@ -20,13 +20,15 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            color: white;
-            font-family: Arial, sans-serif;
         }
-        #player {
+        video, #samsungPlayer {
+            width: 90%;
+            height: auto;
+            outline: none;
+            display: none; /* Initially hidden until detected */
+        }
+        #samsungPlayer {
             position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
             height: 100%;
             background-color: black;
@@ -49,6 +51,19 @@
             font-size: 1.5em;
             display: none;
         }
+        #playButton {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5em;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            display: none; /* Initially hidden */
+        }
     </style>
     <script>
         if ('serviceWorker' in navigator) {
@@ -66,6 +81,7 @@
         }
     </script>
     <script>
+        // Load Samsung Web APIs if on Samsung TV
         function loadSamsungWebApis() {
             if (window.tizen || navigator.userAgent.includes('Samsung')) {
                 var script = document.createElement('script');
@@ -81,21 +97,158 @@
                 document.head.appendChild(script);
             } else {
                 console.log('Non-Samsung environment detected');
-                initializeAVPlay();
+                setupWebPlayer(); // Call web-based video setup
             }
         }
 
+        // Show error message on the page
         function showError(message) {
             const errorElement = document.getElementById('error');
             errorElement.textContent = message;
             errorElement.style.display = 'block';
         }
+
+        // Function to attempt autoplay with fallback to user interaction
+        function tryAutoplay(videoElement) {
+            videoElement.play()
+                .then(() => {
+                    console.log('Autoplay started successfully');
+                })
+                .catch((err) => {
+                    console.error('Autoplay failed:', err);
+                    document.getElementById('loading').style.display = 'none';
+                    videoElement.setAttribute('controls', 'true'); // Enable controls for manual play
+                    const playButton = document.getElementById('playButton');
+                    playButton.style.display = 'block'; // Show play button
+                    playButton.addEventListener('click', () => {
+                        videoElement.play();
+                        playButton.style.display = 'none'; // Hide button after playing
+                    });
+                });
+        }
+
+        // Setup for web-based video playback
+        function setupWebPlayer() {
+            const video = document.getElementById('video');
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const m3u8Url = 'https://play.kringvarp.fo/redirect/uttanlands/_definst_/1080?type=m3u8'; // Replace with your M3U8 URL
+            
+            if (Hls.isSupported()) {
+                const hls = new Hls();
+                hls.loadSource(m3u8Url);
+                hls.attachMedia(video);
+                video.style.display = 'block'; // Show video element for web playback
+                hls.on(Hls.Events.MANIFEST_PARSED, function () {
+                    loading.style.display = 'none';
+                    tryAutoplay(video); // Attempt autoplay when manifest is parsed
+                });
+                hls.on(Hls.Events.ERROR, function (event, data) {
+                    if (data.fatal) {
+                        switch (data.type) {
+                            case Hls.ErrorTypes.NETWORK_ERROR:
+                                console.error('Network error: ', data);
+                                error.style.display = 'block';
+                                error.textContent = 'Network error: Could not load stream.';
+                                break;
+                            case Hls.ErrorTypes.MEDIA_ERROR:
+                                console.error('Media error: ', data);
+                                error.style.display = 'block';
+                                error.textContent = 'Media error: Could not play stream.';
+                                break;
+                            default:
+                                console.error('General error: ', data);
+                                error.style.display = 'block';
+                                error.textContent = 'Error: Could not load stream.';
+                                hls.destroy();
+                                break;
+                        }
+                    }
+                });
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                // For native browser support (Safari, some Samsung Android TVs)
+                video.src = m3u8Url;
+                video.addEventListener('loadedmetadata', function () {
+                    loading.style.display = 'none';
+                    tryAutoplay(video); // Attempt autoplay for natively supported formats
+                });
+                video.addEventListener('error', function () {
+                    console.error('Error loading video');
+                    error.style.display = 'block';
+                    error.textContent = 'Error: Could not load stream.';
+                });
+            } else {
+                // If HLS isn't supported
+                alert('Your browser does not support HLS streaming.');
+                error.style.display = 'block';
+                error.textContent = 'Your browser does not support HLS streaming.';
+            }
+        }
+
+        // Initialize Samsung AVPlay
+        function initializeAVPlay() {
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const samsungPlayer = document.getElementById('samsungPlayer');
+            const m3u8Url = 'https://play.kringvarp.fo/redirect/uttanlands/_definst_/1080?type=m3u8'; // Replace with your M3U8 URL
+
+            samsungPlayer.style.display = 'block'; // Show AVPlay div
+            let avplay = webapis.avplay;
+            avplay.open(m3u8Url);
+            avplay.setDisplayRect(0, 0, window.innerWidth, window.innerHeight);
+            
+            const listener = {
+                onbufferingstart: function() {
+                    loading.style.display = 'block';
+                },
+                onbufferingcomplete: function() {
+                    loading.style.display = 'none';
+                },
+                onstreamcompleted: function() {
+                    console.log('Stream completed');
+                    avplay.stop();
+                },
+                oncurrentplaytime: function(currentTime) {
+                    console.log('Current playback time:', currentTime);
+                },
+                onevent: function(eventType, eventData) {
+                    console.log('Event:', eventType, eventData);
+                },
+                onerror: function(eventType) {
+                    console.error('Error:', eventType);
+                    showError('Error loading stream');
+                    avplay.stop();
+                },
+                onsubtitlechange: function(duration, subtitleData, type, language) {
+                    console.log('Subtitle changed:', subtitleData);
+                },
+                ondrmevent: function(drmEvent, drmData) {
+                    console.log('DRM event:', drmEvent, drmData);
+                },
+                onstreamdata: function(streamData) {
+                    console.log('Stream data:', streamData);
+                }
+            };
+
+            avplay.setListener(listener);
+            avplay.setStreamingProperty('ADAPTIVE_INFO', '1');
+            avplay.setStreamingProperty('BUFFER_SIZE', '20');
+            avplay.setDisplayMethod('PLAYER_DISPLAY_MODE_LETTER_BOX');
+
+            avplay.prepareAsync(() => {
+                avplay.play();
+            });
+        }
+
+        window.onload = loadSamsungWebApis;
     </script>
 </head>
-<body onload="loadSamsungWebApis()">
+<body>
     <div id="loading" class="loading">Loading...</div>
     <div id="error" class="error">Error loading stream</div>
-    <div id="player"></div>
-    <script src="script.js"></script>
+    <video id="video" muted playsinline></video> <!-- Added 'muted' attribute -->
+    <div id="samsungPlayer"></div> <!-- Placeholder for Samsung AVPlay -->
+    <button id="playButton">Play</button> <!-- Play button overlay -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 </body>
 </html>
