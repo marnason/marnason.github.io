@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kringvarp Føroya</title> <!DOCTYPE html>
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#000000">
     <link rel="apple-touch-icon" href="icons/icon-192x192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -50,6 +50,21 @@
             display: none;
         }
     </style>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                        console.log('Service Worker registered with scope:', registration.scope);
+                    })
+                    .catch(function(error) {
+                        console.error('Service Worker registration failed:', error);
+                    });
+            });
+        } else {
+            console.warn('Service Worker is not supported in this browser.');
+        }
+    </script>
     <script>
         function loadSamsungWebApis() {
             if (window.tizen || navigator.userAgent.includes('Samsung')) {

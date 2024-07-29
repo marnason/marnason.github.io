@@ -56,25 +56,35 @@ function initializeAVPlay() {
             });
         } else {
             // Web-based video playback (e.g., on a desktop browser)
-            const videoElement = document.createElement('video');
-            videoElement.src = videoUrl;
-            videoElement.style.width = '100%';
-            videoElement.style.height = '100%';
-            videoElement.autoplay = true;
-            videoElement.controls = false; // Ensure controls are hidden
-            videoElement.oncanplay = () => {
-                loadingElement.style.display = 'none';
-                videoElement.play(); // Ensure autoplay is triggered
-            };
-            videoElement.onerror = () => {
-                showError('Failed to load video stream.');
-            };
-            playerElement.appendChild(videoElement);
+            setupWebPlayer();
         }
     } catch (error) {
         console.error('Failed to initialize AVPlay:', error);
         showError('Error initializing video playback.');
     }
+}
+
+function setupWebPlayer() {
+    const videoElement = document.createElement('video');
+    videoElement.src = videoUrl;
+    videoElement.style.width = '100%';
+    videoElement.style.height = '100%';
+    videoElement.autoplay = true;
+    videoElement.muted = true; // Chrome autoplay policy requires muted autoplay
+    videoElement.controls = false; // Ensure controls are hidden
+    videoElement.oncanplay = () => {
+        loadingElement.style.display = 'none';
+        videoElement.play().catch((error) => {
+            console.error('Autoplay failed:', error);
+            showError('Autoplay is blocked by the browser.');
+            videoElement.muted = true; // Mute and try again
+            videoElement.play().catch(() => showError('Cannot play the video.'));
+        });
+    };
+    videoElement.onerror = () => {
+        showError('Failed to load video stream.');
+    };
+    playerElement.appendChild(videoElement);
 }
 
 function showError(message) {
