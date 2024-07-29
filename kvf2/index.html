@@ -50,25 +50,37 @@
             display: none;
         }
     </style>
-    <!-- Include Samsung Product API -->
-    <script type="text/javascript" src="$WEBAPIS/webapis/webapis.js"></script>
-    <script type="text/javascript" src="$WEBAPIS/webapis/smartview/webapis.js"></script>
+    <script>
+        function loadSamsungWebApis() {
+            if (window.tizen || navigator.userAgent.includes('Samsung')) {
+                var script = document.createElement('script');
+                script.src = '$WEBAPIS/webapis/webapis.js';
+                script.onload = function() {
+                    console.log('Samsung Web APIs loaded');
+                    initializeAVPlay();
+                };
+                script.onerror = function() {
+                    console.error('Failed to load Samsung Web APIs');
+                    showError('Failed to load Samsung Web APIs');
+                };
+                document.head.appendChild(script);
+            } else {
+                console.log('Non-Samsung environment detected');
+                initializeAVPlay();
+            }
+        }
+
+        function showError(message) {
+            const errorElement = document.getElementById('error');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+        }
+    </script>
 </head>
-<body>
+<body onload="loadSamsungWebApis()">
     <div id="loading" class="loading">Loading...</div>
     <div id="error" class="error">Error loading stream</div>
     <div id="player"></div>
     <script src="script.js"></script>
-    <script>
-        window.onload = function() {
-            if (window.tizen) {
-                document.getElementById('error').style.display = 'none';
-                initializeAVPlay();
-            } else {
-                document.getElementById('error').textContent = 'Samsung APIs are not supported in this browser.';
-                document.getElementById('error').style.display = 'block';
-            }
-        }
-    </script>
 </body>
 </html>
