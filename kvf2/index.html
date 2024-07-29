@@ -20,6 +20,8 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            color: white;
+            font-family: Arial, sans-serif;
         }
         video, #samsungPlayer {
             width: 90%;
@@ -49,7 +51,7 @@
             left: 50%;
             transform: translate(-50%, -50%);
             font-size: 1.5em;
-            display: none;
+            display: block;
         }
         #playButton {
             position: absolute;
@@ -148,18 +150,15 @@
                         switch (data.type) {
                             case Hls.ErrorTypes.NETWORK_ERROR:
                                 console.error('Network error: ', data);
-                                error.style.display = 'block';
-                                error.textContent = 'Network error: Could not load stream.';
+                                showError('Network error: Could not load stream.');
                                 break;
                             case Hls.ErrorTypes.MEDIA_ERROR:
                                 console.error('Media error: ', data);
-                                error.style.display = 'block';
-                                error.textContent = 'Media error: Could not play stream.';
+                                showError('Media error: Could not play stream.');
                                 break;
                             default:
                                 console.error('General error: ', data);
-                                error.style.display = 'block';
-                                error.textContent = 'Error: Could not load stream.';
+                                showError('Error: Could not load stream.');
                                 hls.destroy();
                                 break;
                         }
@@ -174,14 +173,12 @@
                 });
                 video.addEventListener('error', function () {
                     console.error('Error loading video');
-                    error.style.display = 'block';
-                    error.textContent = 'Error: Could not load stream.';
+                    showError('Error: Could not load stream.');
                 });
             } else {
                 // If HLS isn't supported
                 alert('Your browser does not support HLS streaming.');
-                error.style.display = 'block';
-                error.textContent = 'Your browser does not support HLS streaming.';
+                showError('Your browser does not support HLS streaming.');
             }
         }
 
@@ -196,8 +193,8 @@
             let avplay = webapis.avplay;
             avplay.open(m3u8Url);
             avplay.setDisplayRect(0, 0, window.innerWidth, window.innerHeight);
-            
-            const listener = {
+
+            avplay.setListener({
                 onbufferingstart: function() {
                     loading.style.display = 'block';
                 },
@@ -216,7 +213,7 @@
                 },
                 onerror: function(eventType) {
                     console.error('Error:', eventType);
-                    showError('Error loading stream');
+                    showError(`Error loading stream: ${eventType}`);
                     avplay.stop();
                 },
                 onsubtitlechange: function(duration, subtitleData, type, language) {
@@ -228,15 +225,17 @@
                 onstreamdata: function(streamData) {
                     console.log('Stream data:', streamData);
                 }
-            };
+            });
 
-            avplay.setListener(listener);
             avplay.setStreamingProperty('ADAPTIVE_INFO', '1');
             avplay.setStreamingProperty('BUFFER_SIZE', '20');
             avplay.setDisplayMethod('PLAYER_DISPLAY_MODE_LETTER_BOX');
 
             avplay.prepareAsync(() => {
                 avplay.play();
+            }, (error) => {
+                console.error('AVPlay prepareAsync error:', error);
+                showError(`AVPlay prepareAsync error: ${error}`);
             });
         }
 
