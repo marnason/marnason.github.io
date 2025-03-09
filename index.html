@@ -49,7 +49,7 @@
 <body>
     <div id="loading" class="loading">Loading...</div>
     <div id="error" class="error" style="display: none;">Error loading stream</div>
-    <video id="video" playsinline></video> <!-- Added 'muted' attribute -->
+    <video id="video" muted playsinline controls></video> <!-- Added 'muted' attribute -->
     <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
     <script>
         const video = document.getElementById('video');
